@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Search Asteroids</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <style>
+        body {
+            font-family: "Monaco", monospace;
+            background-color: #d5d4e3;
+            color: rgb(2, 2, 2);
+        }
+        header {
+            background-color: #040404;
+            color: white;
+            padding: 10px 0;
+        }
+        header nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+        }
+        header nav ul li {
+            margin: 0 15px;
+        }
+        header nav ul li a {
+            color: white;
+            text-decoration: none;
+            padding: 10px;
+            display: block;
+        }
+        header nav ul li a:hover {
+            background-color: #575757;
+            border-radius: 4px;
+        }
+        .container {
+            margin-top: 20px;
+        }
+        .form-container {
+            max-width: 600px;
+            margin: auto;
+        }
+        .form-label {
+            font-size: 0.9rem;
+        }
+        .form-control {
+            font-size: 0.9rem;
+            padding: 5px;
+        }
+        .btn {
+            font-size: 0.9rem;
+            padding: 5px 10px;
+        }
+        .results-container {
+            margin-top: 20px;
+        }
+        table {
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Search Asteroids</h1>
+        <div class="form-container">
+            <form id="searchForm">
+                <div class="row mb-2">
+                    <div class="col">
+                        <label for="startDate" class="form-label">Start Date</label>
+                        <input type="date" class="form-control" id="startDate" name="startDate">
+                    </div>
+                    <div class="col">
+                        <label for="endDate" class="form-label">End Date</label>
+                        <input type="date" class="form-control" id="endDate" name="endDate">
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col">
+                        <label for="diameterMin" class="form-label">Min Diameter (km)</label>
+                        <input type="number" class="form-control" id="diameterMin" name="diameterMin">
+                    </div>
+                    <div class="col">
+                        <label for="diameterMax" class="form-label">Max Diameter (km)</label>
+                        <input type="number" class="form-control" id="diameterMax" name="diameterMax">
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="hazardous" name="hazardous">
+                            <label class="form-check-label" for="hazardous">Potentially Hazardous</label>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
+        </div>
+        <div class="results-container">
+            <h2>Results</h2>
+            <table class="table" id="resultsTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Velocity (km/h)</th>
+                        <th>Diameter (km)</th>
+                        <th>Absolute Magnitude</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Results will be populated here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        document.getElementById('searchForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const diameterMin = document.getElementById('diameterMin').value;
+            const diameterMax = document.getElementById('diameterMax').value;
+            const hazardous = document.getElementById('hazardous').checked;
+
+            try {
+                const response = await fetch('/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        start_date: startDate,
+                        end_date: endDate,
+                        diameter_min: diameterMin,
+                        diameter_max: diameterMax,
+                        hazardous: hazardous
+                    })
+                });
+
+                const data = await response.json();
+                const resultsTableBody = document.getElementById('resultsTable').getElementsByTagName('tbody')[0];
+                resultsTableBody.innerHTML = '';
+
+                console.log('Search response:', data);  // Log the response
+
+                if (data.results.length > 0) {
+                    data.results.forEach(result => {
+                        const row = resultsTableBody.insertRow();
+                        const nameCell = row.insertCell(0);
+                        const velocityCell = row.insertCell(1);
+                        const diameterCell = row.insertCell(2);
+                        const absoluteMagnitudeCell = row.insertCell(3);
+
+                        nameCell.textContent = result.name;
+                        velocityCell.textContent = result.velocity;
+                        diameterCell.textContent = result.diameter;
+                        absoluteMagnitudeCell.textContent = result.absolute_magnitude;
+                    });
+                } else {
+                    const row = resultsTableBody.insertRow();
+                    const cell = row.insertCell(0);
+                    cell.colSpan = 4;
+                    cell.textContent = 'No results found.';
+                }
+            } catch (error) {
+                console.error('Error fetching search results:', error);
+            }
+        });
+    </script>
+</body>
+</html>
